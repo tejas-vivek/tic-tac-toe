@@ -174,35 +174,36 @@ function init() {
   const view = new View();
   const store = new Store("live-t3-storage-key", players);
 
-  // function initView(){
-  //   view.closeAll();
-  //   view.clearMoves();
-  //   view.setTurnIndicator(store.game.currentPlayer);
-  //   view.updateScorecard(store.stats.playerWithStats[0].wins, store.stats.playerWithStats[1].wins, store.stats.ties);
-  //   view.initializeMoves(store.game.moves);
-  // }
+  //Current tab state changes
+  store.addEventListener("statechange", ()=>{
+    view.render(store.game, store.stats)
+  });
 
+  //Different tab state changes
   window.addEventListener("storage", () => {
     console.log("state changed in another tab");
     view.render(store.game, store.stats);
   });
 
+  //The first load of the document
   view.render(store.game, store.stats);
 
-  console.log(store.game);
+  // console.log(store.game);
 
   view.bindResetGameEvent((event) => {
     store.reset();
-    view.render(store.game, store.stats)
+    // view.render(store.game, store.stats)
 
   });
 
   view.bindNewRoundEvent((event) => {
     store.newRound();
-    view.render(store.game, store.stats)
+    // view.render(store.game, store.stats)
   });
 
   view.bindPlayerMoveEvent((square) => {
+
+    console.log(square);
     const existingMove = store.game.moves.find(
       (move) => move.squareId === +square.id
     );
@@ -210,21 +211,11 @@ function init() {
     if (existingMove) {
       return;
     }
-    //Place the icon of the current player in the square
-    view.handlePlayerMove(square, store.game.currentPlayer);
+    
     //Advance to the next state by pushing a move to the moves array
     store.playerMove(+square.id);
 
-    if (store.game.status.isComplete) {
-      view.openModal(
-        store.game.status.winner
-          ? `${store.game.status.winner.name}, wins!`
-          : "Tie game!"
-      );
-      return;
-    }
-    //Set the next players turn indicator
-    view.setTurnIndicator(store.game.currentPlayer);
+    // view.render(store.game, store.stats);
   });
 
   // console.log(view.$.turn);

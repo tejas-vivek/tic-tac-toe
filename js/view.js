@@ -16,6 +16,7 @@ export default class View {
     this.$.p1Wins = this.#qs('[data-id="p1-wins');
     this.$.p2Wins = this.#qs('[data-id="p2-wins');
     this.$.ties = this.#qs('[data-id="ties');
+    this.$.grid = this.#qs('[data-id="grid"]');
 
     this.$$.squares = this.#qsAll('[data-id="square"]');
 
@@ -25,19 +26,28 @@ export default class View {
     });
   }
 
-  render(game, stats){
+  render(game, stats) {
     const { playerWithStats, ties } = stats;
-    const { moves, currentPlayer, status: { isComplete, winner },} = game;
+    const {
+      moves,
+      currentPlayer,
+      status: { isComplete, winner },
+    } = game;
 
     this.#closeAll();
     this.#clearMoves();
-    this.#setTurnIndicator(currentPlayer);
     this.#updateScorecard(
       playerWithStats[0].wins,
       playerWithStats[1].wins,
       ties
     );
     this.#initializeMoves(moves);
+
+    if (isComplete) {
+      this.#openModal(winner ? `${winner.name}, wins!` : "Tie game!");
+      return;
+    }
+    this.#setTurnIndicator(currentPlayer);
   }
 
   /* Event Listeners  */
@@ -52,10 +62,12 @@ export default class View {
   }
 
   bindPlayerMoveEvent(handler) {
-    this.$$.squares.forEach((square) => {
-      square.addEventListener("click", () => handler(square));
-    });
+    this.#delegate(this.$.grid, '[data-id="square"]', "click", handler);
+    // this.$$.squares.forEach((square) => {
+    //   square.addEventListener("click", () => handler(square));
+    // });
   }
+
   /**
    * DOM Helper Methods
    */
@@ -86,16 +98,15 @@ export default class View {
     });
   }
 
-  #initializeMoves(moves){
-    this.$$.squares.forEach(square => {
-      const existingMove = moves.find(move => move.squareId === +square.id)
+  #initializeMoves(moves) {
+    this.$$.squares.forEach((square) => {
+      const existingMove = moves.find((move) => move.squareId === +square.id);
 
-      if(existingMove){
-        this.handlePlayerMove(square, existingMove.player)
+      if (existingMove) {
+        this.#handlePlayerMove(square, existingMove.player);
       }
-    })
+    });
   }
-    
 
   #closeMenu() {
     this.$.menuItems.classList.add("hidden");
@@ -152,5 +163,13 @@ export default class View {
     label.innerText = `${player.name}, you're up!`;
 
     this.$.turn.replaceChildren(icon, label);
+  }
+
+  #delegate(el, selector, eventKey, handler) {
+    el.addEventListener(eventKey, (event) => {
+      if (event.target.matches(selector)) {
+        handler(event.target);
+      }
+    });
   }
 }
